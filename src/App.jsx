@@ -9,7 +9,7 @@ const VIEWS = {
 };
 
 function App() {
-  const [view, setView] = useState("history");
+  const [view, setView] = useState("main");
   const CurrentView = VIEWS[view];
   return (
     <div className="container">
