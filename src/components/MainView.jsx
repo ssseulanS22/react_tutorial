@@ -1,22 +1,35 @@
 import "./MainView.css";
 
 import { useEffect, useRef, useState } from "react";
-import { getDate } from "./DateView.jsx";
-import { getSingleDiary, updateDiary } from "../api/diary.js";
+import { getTextDate } from "./DateView.jsx";
+import { selectSingleDiary, updateDiary } from "../api/diary.js";
 
-function MainView() {
+function MainView(props) {
   /** 오늘날짜 */
-  const now = new Date();
-  const [today, setToday] = useState(() => {
-    return getDate(now);
-  });
+  const [date, setDate] = useState(new Date());
+  const today = getTextDate(date);
   const formatDate = today.formatDate;
   const md = today.mmdd;
   const ymd = today.yy + md;
 
   /** 날짜이동 */
   const moveDate = (arrow) => {
-    console.log(arrow);
+    setContents("");
+    setDate((prev) => {
+      if (arrow == "T") {
+        return new Date();
+      } else {
+        const next = new Date(prev);
+        next.setDate(next.getDate() + (arrow == "P" ? -1 : +1));
+
+        // 오늘 이후 금지
+        const maxDate = new Date();
+        next.setHours(0, 0, 0, 0);
+        maxDate.setHours(0, 0, 0, 0);
+
+        return next < maxDate ? next : maxDate;
+      }
+    });
   };
 
   /** 질문 */
@@ -37,10 +50,8 @@ function MainView() {
   const [contents, setContents] = useState("");
   useEffect(() => {
     async function fetchEntry() {
-      const item = await getSingleDiary(ymd);
-      if (item) {
-        setContents(item.contents);
-      }
+      const item = await selectSingleDiary(ymd);
+      setContents(item ? item.contents : "");
     }
     fetchEntry();
   }, [ymd]);
@@ -63,15 +74,16 @@ function MainView() {
     <>
       <div className="header">
         <div>
-          <span onClick={moveDate("P")}> &nbsp; ← &nbsp; </span>
+          <span onClick={() => moveDate("P")}> &nbsp; ← &nbsp; </span>
           <span>{formatDate}</span>
-          <span onClick={moveDate("N")}> &nbsp; → &nbsp; </span>
+          <span onClick={() => moveDate("N")}> &nbsp; → &nbsp; </span>
+          <span onClick={() => moveDate("T")}> &nbsp; 오늘 &nbsp; </span>
         </div>
         <div>
           <button
             className="history-btn"
             onClick={() => {
-              // HistoryView 화면으로 전환
+              props.setView("history");
             }}
           >
             기록 보기
